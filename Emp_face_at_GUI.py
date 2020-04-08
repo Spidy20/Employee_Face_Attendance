@@ -8,6 +8,7 @@ import datetime,subprocess
 import pyttsx3
 import time,csv,os
 from pathlib import Path
+import time
 
 #Size for displaying Image
 w = 500;h = 360
@@ -43,7 +44,6 @@ def image_generate():
         try:
             cam = cv2.VideoCapture(0)
             detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-
             imageFrame = tk.Frame(windo)
             imageFrame.place(x=665, y=50)
 
@@ -142,10 +142,48 @@ def image_generate():
             speak('Something is wrong')
             print(e)
 
-
+def model_training():
+    def getImagesAndLabels(path):
+        detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+        imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
+        faceSamples = []
+        Ids = []
+        for imagePath in imagePaths:
+            pilImage = Image.open(imagePath).convert('L')
+            imageNp = np.array(pilImage, 'uint8')
+            Id = int(os.path.split(imagePath)[-1].split(".")[1])
+            faces = detector.detectMultiScale(imageNp)
+            for (x, y, w, h) in faces:
+                faceSamples.append(imageNp[y:y + h, x:x + w])
+                Ids.append(Id)
+        return faceSamples, Ids
+    def gen_lab():
+        ic1 = tk.Label(windo, text="Model Trained..", width=13, height=1, fg="black", bg="yellow",
+                       font=('times', 14, ' bold '))
+        ic1.place(x=280, y=247)
+        windo.after(4000, destroy_widget, ic1)
+    windo.after(10000,gen_lab)
+    frames = [PhotoImage(file='./images/play.gif', format='gif -index %i' % (i)) for i in range(8)]
+    def update(ind):
+        frame = frames[ind]
+        ind += 1
+        if ind > 7:
+            ind = 0
+        try:
+            gif_play.configure(image=frame)
+        except:
+            pass
+        windo.after(100, update, ind)
+    gif_play = Label(windo, borderwidth=0)
+    gif_play.place(x=850, y=130)
+    windo.after(0, update, 0)
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    faces, Id = getImagesAndLabels("TrainingImage")
+    recognizer.train(faces, np.array(Id))
+    recognizer.save("./Trained_model/Model.yml")
+    windo.after(8000,destroy_widget,gif_play)
 def destroy_widget(widget):
     widget.destroy()
-
 def breakcam():
     cam.release()
 
@@ -214,7 +252,7 @@ ca = tk.Label(windo, text="Generate Faces", bg="midnightblue", fg="white", width
 ca.place(x=48, y=590)
 
 tm = PhotoImage(file = "./images/train.png")
-t_m = tk.Button(windo,borderwidth=0,bg = 'white',image = tm)
+t_m = tk.Button(windo,borderwidth=0,bg = 'white',image = tm,command = model_training)
 t_m.place(x=250, y=480)
 
 tb = tk.Label(windo, text="Train Model", bg="midnightblue", fg="white", width=11,
