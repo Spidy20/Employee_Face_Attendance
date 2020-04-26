@@ -1,44 +1,46 @@
-# import cv2
-# import numpy as np
-# from PIL import Image
-# import os
-# recognizer = cv2.face.LBPHFaceRecognizer_create()
-# detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-#
-# def getImagesAndLabels(path):
-#     imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
-#     faceSamples = []
-#     Ids = []
-#     for imagePath in imagePaths:
-#         pilImage = Image.open(imagePath).convert('L')
-#         imageNp = np.array(pilImage, 'uint8')
-#         Id = int(os.path.split(imagePath)[-1].split(".")[1])
-#         faces = detector.detectMultiScale(imageNp)
-#         for (x, y, w, h) in faces:
-#             faceSamples.append(imageNp[y:y + h, x:x + w])
-#             Ids.append(Id)
-#     return faceSamples, Ids
-#
-# try:
-#     os.mkdir("Trained_model")
-#     faces, Id = getImagesAndLabels("TrainingImage")
-#     recognizer.train(faces, np.array(Id))
-#     recognizer.save("./Trained_model/Model.yml")
-# except Exception as e:
-#     print(e)
 from tkinter import *
-root = Tk()
-frames = [PhotoImage(file='./images/play.gif',format = 'gif -index %i' %(i)) for i in range(8)]
-def update(ind):
-    frame = frames[ind]
-    ind += 1
-    print(ind)
-    if ind>7:
-        ind = 0
-    label.configure(image=frame)
-    root.after(100, update, ind)
+import tkinter.ttk as ttk
+import csv
 
-label = Label(root,borderwidth=0,bg = 'white')
-label.pack()
-root.after(0, update, 0)
+root = Tk()
+root.title("Python - Import CSV File To Tkinter Table")
+width = 500
+height = 400
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+x = (screen_width / 2) - (width / 2)
+y = (screen_height / 2) - (height / 2)
+root.geometry("%dx%d+%d+%d" % (width, height, x, y))
+root.resizable(0, 0)
+
+TableMargin = Frame(root, width=250)
+TableMargin.pack(side=TOP)
+
+scrollbarx = Scrollbar(TableMargin, orient=HORIZONTAL)
+scrollbary = Scrollbar(TableMargin, orient=VERTICAL)
+tree = ttk.Treeview(TableMargin, columns=("Employye ID", "Name", "Date",'Registration Time'), height=300, selectmode="extended",
+                    yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
+scrollbary.config(command=tree.yview)
+scrollbary.pack(side=RIGHT, fill=Y)
+scrollbarx.config(command=tree.xview)
+scrollbarx.pack(side=BOTTOM, fill=X)
+tree.heading('Employye ID', text="Employye ID", anchor=W)
+tree.heading('Name', text="Name", anchor=W)
+tree.heading('Date', text="Date", anchor=W)
+tree.heading('Registration Time', text="Time", anchor=W)
+tree.column('#0', stretch=NO, minwidth=0, width=0)
+tree.column('#1', stretch=NO, minwidth=0, width=120)
+tree.column('#2', stretch=NO, minwidth=0, width=120)
+tree.column('#3', stretch=NO, minwidth=0, width=120)
+tree.column('#3', stretch=NO, minwidth=0, width=120)
+tree.pack()
+with open('./RegisteredEmployees/RegisteredEmployees.csv') as f:
+  reader = csv.DictReader(f, delimiter=',')
+  for row in reader:
+    emp_id = row['Employye ID']
+    name = row['Name']
+    dt = row['Date']
+    ti = row['Registration Time']
+    tree.insert("", 0, values=(emp_id, name, dt,ti),tags = ('oddrow',))
+    tree.tag_configure('oddrow', background='black',foreground = 'white',font=('times', 14, ' bold '))
 root.mainloop()
